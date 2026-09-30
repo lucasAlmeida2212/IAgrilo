@@ -31,7 +31,7 @@ import uuid
 from datetime import datetime, timezone
 from qdrant_client import models
 from langchain_groq import ChatGroq
-from pymongo import MongoClient
+from app.mongo import get_col_sessoes
 from app.vectorstore import qdrant, gerar_embedding, COLLECTION_MEMORIA
 
 import app.config as config
@@ -40,15 +40,10 @@ import app.config as config
 
 
 # ==============================================================================
-# CONEXÃO
+# CONEXÃO (lazy via app.mongo — não conecta no import, não derruba o boot)
 # ==============================================================================
 
-_mongo      = MongoClient(config.MONGODB_URI)
-db          = _mongo["assessor"]
-col_sessoes = db["sessoes"]
-
-col_sessoes.create_index("session_id")
-col_sessoes.create_index("iniciada_em")
+col_sessoes = get_col_sessoes()
 
 # ==============================================================================
 # LLM PARA RESUMO

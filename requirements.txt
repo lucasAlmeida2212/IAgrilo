@@ -7,6 +7,7 @@ python-dotenv==1.2.3
 # Banco de dados
 psycopg2-binary==2.9.10
 pymongo==4.18.2
+certifi>=2024.2.2
 qdrant-client==1.19.0
 
 # LangChain / LangGraph

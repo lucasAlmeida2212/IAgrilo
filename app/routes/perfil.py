@@ -2,17 +2,14 @@ from typing import List, Literal, Dict, Any
 import uuid
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field, model_validator
-from pymongo import MongoClient
 from qdrant_client.http import models
 
-import app.config as config
+from app.mongo import get_colecao_perfil
 from app.vectorstore import qdrant, gerar_embedding, COLLECTION_RESTRICOES
 
 router = APIRouter()
 
-mongo_client = MongoClient(config.MONGODB_URI)
-db = mongo_client.get_default_database("financas_db") 
-colecao_perfil = db["perfil_usuario"]
+colecao_perfil = get_colecao_perfil()
 
 
 class PerfilSchema(BaseModel):

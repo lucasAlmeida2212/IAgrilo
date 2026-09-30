@@ -1,4 +1,5 @@
-from fastapi import FastAPI 
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 import app.routes.chat as routes
 import app.config as config
 from app.routes import chat, session, perfil
@@ -7,8 +8,22 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 FRONTEND_URL = FRONTEND_DIR  / "index.html"
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Cria índices do Mongo sem derrubar o boot se ele estiver fora.
+    # Sem isso, o Render marcava o deploy como failed no handshake TLS.
+    try:
+        from app.mongo import ensure_indexes
+        ensure_indexes()
+    except Exception:
+        pass
+    yield
+
+
 app = FastAPI(
-    title="My FastAPI Application"
+    title="My FastAPI Application",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -21,7 +36,12 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok","problema_configuração" : config.validar_config()}
+    try:
+        from app.mongo import ping_mongo
+        mongo_ok = ping_mongo()
+    except Exception:
+        mongo_ok = False
+    return {"status": "ok", "mongo_ok": mongo_ok, "problema_configuração" : config.validar_config()}
 
 app.include_router(routes.router)
 

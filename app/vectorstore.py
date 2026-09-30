@@ -13,7 +13,33 @@ from qdrant_client import QdrantClient, models
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from app.config import QDRANT_URL, QDRANT_API_KEY, GEMINI_API_KEY
 
-qdrant = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+import logging
+
+_log = logging.getLogger(__name__)
+
+
+class _LazyQdrant:
+    """Proxy que só cria o QdrantClient real no primeiro uso.
+
+    Evita que o app caia no boot no Render quando QDRANT_URL ainda não
+    está configurada — o erro aparece só ao usar a busca vetorial.
+    """
+
+    def __init__(self):
+        self._real = None
+
+    def _get(self):
+        if self._real is None:
+            if not QDRANT_URL:
+                raise RuntimeError("QDRANT_URL ausente no .env / env do Render")
+            self._real = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+        return self._real
+
+    def __getattr__(self, name):
+        return getattr(self._get(), name)
+
+
+qdrant = _LazyQdrant()
 
 COLLECTION_MEMORIA = "memoria_resumos"
 COLLECTION_FAQ     = "faq_chunks"
