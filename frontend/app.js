@@ -1,8 +1,15 @@
 // ============================================================
 // Configuração
 // ============================================================
-// Ajuste para a URL onde o FastAPI está rodando.
-const API_BASE = "http://localhost:8000";
+// Em dev (arquivo aberto via localhost) fala com o uvicorn local.
+// Em produção (Render serve API + frontend na mesma origem via StaticFiles
+// em app/main.py) usa a própria origem — sem isso o browser tentava
+// POST em http://localhost:8000 e caía em "Failed to fetch".
+const _host = window.location.hostname || "";
+const API_BASE =
+  _host === "localhost" || _host === "127.0.0.1" || _host === ""
+    ? "http://localhost:8000"
+    : window.location.origin;
 const CHAT_ENDPOINT = `${API_BASE}/chat`;
 
 // ============================================================
